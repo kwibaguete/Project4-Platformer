@@ -11,9 +11,15 @@
 #include "Scene.h"
 
 void Scene::lose_life() {
-    if (!m_game_state.game_over) {
-        m_game_state.lives--;
-        check_game_over();
+    m_game_state.lives--;
+
+    // Play damage sound
+    Mix_PlayChannel(-1, m_game_state.hurt_sfx, 0);
+
+    // Check if player has run out of lives
+    if (m_game_state.lives <= 0) {
+        m_game_state.lives = 0;  // Ensure lives don't go negative
+        m_game_state.game_over = true;  // Set game over flag
     }
 }
 

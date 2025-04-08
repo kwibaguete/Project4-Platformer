@@ -102,4 +102,3 @@ void Utility::draw_text(ShaderProgram* program, GLuint font_texture_id, std::str
     glDisableVertexAttribArray(program->get_position_attribute());
     glDisableVertexAttribArray(program->get_tex_coordinate_attribute());
 }
-

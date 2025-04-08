@@ -39,6 +39,7 @@ LevelA::~LevelA()
     delete    m_game_state.player;
     delete    m_game_state.map;
     Mix_FreeChunk(m_game_state.jump_sfx);
+    Mix_FreeChunk(m_game_state.hurt_sfx);
     Mix_FreeMusic(m_game_state.bgm);
 }
 
@@ -101,11 +102,12 @@ void LevelA::initialise()
      */
     Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 4096);
 
-    m_game_state.bgm = Mix_LoadMUS("assets/dooblydoo.mp3");
+    m_game_state.bgm = Mix_LoadMUS("assets/yep.wav");
     Mix_PlayMusic(m_game_state.bgm, -1);
-    Mix_VolumeMusic(0.0f);
+    Mix_VolumeMusic(60.0f);
 
     m_game_state.jump_sfx = Mix_LoadWAV("assets/bounce.wav");
+    m_game_state.hurt_sfx = Mix_LoadWAV("assets/damage.wav");
 
     // Set next scene ID to -1 (no transition yet)
     m_game_state.next_scene_id = -1;
@@ -166,6 +168,7 @@ void LevelA::render(ShaderProgram* g_shader_program)
 
     // Display game over message if needed
     if (m_game_state.game_over) {
-        draw_text(g_shader_program, m_game_state.font_texture_id, "YOU LOSE", 1.0f, 0.5f, glm::vec3(-3.0f, 0.0f, 0.0f));
+        GLuint g_font_texture_id = Utility::load_texture("assets/font1.png");
+        draw_text(g_shader_program, g_font_texture_id, "YOU LOSE", 1.0f, 0.5f, glm::vec3(0.0f, 0.0f, 0.0f));
     }
 }
