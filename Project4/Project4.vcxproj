@@ -137,6 +137,7 @@
     <ClCompile Include="LevelA.cpp" />
     <ClCompile Include="LevelB.cpp" />
     <ClCompile Include="LevelC.cpp" />
+    <ClCompile Include="LoseScene.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Map.cpp" />
     <ClCompile Include="MenuScene.cpp" />
@@ -149,6 +150,7 @@
     <ClInclude Include="LevelA.h" />
     <ClInclude Include="LevelB.h" />
     <ClInclude Include="LevelC.h" />
+    <ClInclude Include="LoseScene.h" />
     <ClInclude Include="Map.h" />
     <ClInclude Include="MenuScene.h" />
     <ClInclude Include="Scene.h" />
