@@ -62,11 +62,11 @@ public:
 
     // ————— METHODS ————— //
     Entity();
-    Entity(GLuint texture_id, float speed, glm::vec3 acceleration, float jump_power, int walking[4][4], float animation_time,
+    Entity(GLuint texture_id, float speed, glm::vec3 acceleration, float jump_power, float animation_time,
         int animation_frames, int animation_index, int animation_cols,
-        int animation_rows, float width, float height, EntityType EntityType);
-    Entity(GLuint texture_id, float speed, float width, float height, EntityType EntityType); // Simpler constructor
-    Entity(GLuint texture_id, float speed, float width, float height, EntityType EntityType, AIType AIType, AIState AIState); // AI constructor
+        int animation_rows, float width, float height, EntityType entity_type);
+    Entity(GLuint texture_id, float speed, float width, float height, EntityType entity_type); // Simpler constructor
+    Entity(GLuint texture_id, float speed, float width, float height, EntityType entity_type, AIType ai_type, AIState ai_state); // AI constructor
     ~Entity();
 
     void draw_sprite_from_texture_atlas(ShaderProgram* program, GLuint texture_id, int index);

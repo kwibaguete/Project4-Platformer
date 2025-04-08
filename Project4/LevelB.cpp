@@ -15,7 +15,7 @@
 #define LEVEL_HEIGHT 8
 #define LEVEL_END_X 12.0f  // Position where the level ends
 
-constexpr char SPRITESHEET_FILEPATH[] = "assets/george_0.png",
+constexpr char PLAYER_FILEPATH[] = "assets/pudding.png",
 PLATFORM_FILEPATH[] = "assets/platformPack_tile027.png",
 ENEMY_FILEPATH[] = "assets/usagi.png",
 FONT_FILEPATH[] = "assets/font1.png";
@@ -48,15 +48,7 @@ void LevelB::initialise()
     GLuint map_texture_id = Utility::load_texture("assets/tileset.png");
     m_game_state.map = new Map(LEVEL_WIDTH, LEVEL_HEIGHT, LEVEL_B_DATA, map_texture_id, 1.0f, 4, 1);
 
-    GLuint player_texture_id = Utility::load_texture(SPRITESHEET_FILEPATH);
-
-    int player_walking_animation[4][4] =
-    {
-        { 1, 5, 9, 13 },  // for George to move to the left,
-        { 3, 7, 11, 15 }, // for George to move to the right,
-        { 2, 6, 10, 14 }, // for George to move upwards,
-        { 0, 4, 8, 12 }   // for George to move downwards
-    };
+    GLuint player_texture_id = Utility::load_texture(PLAYER_FILEPATH);
 
     glm::vec3 acceleration = glm::vec3(0.0f, -4.81f, 0.0f);
 
@@ -65,12 +57,11 @@ void LevelB::initialise()
         5.0f,                      // speed
         acceleration,              // acceleration
         5.0f,                      // jumping power
-        player_walking_animation,  // animation index sets
         0.0f,                      // animation time
-        4,                         // animation frame amount
+        0,                         // animation frame amount (set to 0 for single sprite)
         0,                         // current animation index
-        4,                         // animation column amount
-        4,                         // animation row amount
+        0,                         // animation column amount (set to 0 for single sprite)
+        0,                         // animation row amount (set to 0 for single sprite)
         1.0f,                      // width
         1.0f,                       // height
         PLAYER
@@ -106,7 +97,7 @@ void LevelB::initialise()
     Mix_PlayMusic(m_game_state.bgm, -1);
     Mix_VolumeMusic(60.0f);
 
-    m_game_state.jump_sfx = Mix_LoadWAV("assets/bounce.wav");
+    m_game_state.jump_sfx = Mix_LoadWAV("assets/sploosh.wav");
     m_game_state.jump_sfx = Mix_LoadWAV("assets/damage.wav");
 
     // Set next scene to -1 (no next scene yet)

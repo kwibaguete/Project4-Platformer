@@ -1,4 +1,3 @@
-
 /**
 * Author: Belinda Weng
 * Assignment: Rise of the AI
@@ -74,7 +73,8 @@ Entity::Entity()
     : m_position(0.0f), m_movement(0.0f), m_scale(1.0f, 1.0f, 0.0f), m_model_matrix(1.0f),
     m_speed(0.0f), m_animation_cols(0), m_animation_frames(0), m_animation_index(0),
     m_animation_rows(0), m_animation_indices(nullptr), m_animation_time(0.0f),
-    m_texture_id(0), m_velocity(0.0f), m_acceleration(0.0f), m_width(0.0f), m_height(0.0f)
+    m_texture_id(0), m_velocity(0.0f), m_acceleration(0.0f), m_width(0.0f), m_height(0.0f),
+    m_entity_type(PLATFORM), m_ai_type(WALKER), m_ai_state(IDLE), m_is_jumping(false), m_jumping_power(0.0f)
 {
     // Initialize m_walking with zeros or any default value
     for (int i = 0; i < SECONDS_PER_FRAME; ++i)
@@ -82,35 +82,40 @@ Entity::Entity()
 }
 
 // Parameterized constructor
-Entity::Entity(GLuint texture_id, float speed, glm::vec3 acceleration, float jump_power, int walking[1][4], float animation_time,
+Entity::Entity(GLuint texture_id, float speed, glm::vec3 acceleration, float jump_power, float animation_time,
     int animation_frames, int animation_index, int animation_cols,
-    int animation_rows, float width, float height, EntityType EntityType)
+    int animation_rows, float width, float height, EntityType entity_type)
     : m_position(0.0f), m_movement(0.0f), m_scale(1.0f, 1.0f, 0.0f), m_model_matrix(1.0f),
     m_speed(speed), m_acceleration(acceleration), m_jumping_power(jump_power), m_animation_cols(animation_cols),
     m_animation_frames(animation_frames), m_animation_index(animation_index),
     m_animation_rows(animation_rows), m_animation_indices(nullptr),
     m_animation_time(animation_time), m_texture_id(texture_id), m_velocity(0.0f),
-    m_width(width), m_height(height), m_entity_type(EntityType)
-{
-    face_right();
-    set_walking(walking);
-}
-
-// Simpler constructor for partial initialization
-Entity::Entity(GLuint texture_id, float speed, float width, float height, EntityType EntityType)
-    : m_position(0.0f), m_movement(0.0f), m_scale(1.0f, 1.0f, 0.0f), m_model_matrix(1.0f),
-    m_speed(speed), m_animation_cols(0), m_animation_frames(0), m_animation_index(0),
-    m_animation_rows(0), m_animation_indices(nullptr), m_animation_time(0.0f),
-    m_texture_id(texture_id), m_velocity(0.0f), m_acceleration(0.0f), m_width(width), m_height(height), m_entity_type(EntityType)
+    m_width(width), m_height(height), m_entity_type(entity_type), m_ai_type(WALKER), m_ai_state(IDLE), m_is_jumping(false)
 {
     // Initialize m_walking with zeros or any default value
     for (int i = 0; i < SECONDS_PER_FRAME; ++i)
         for (int j = 0; j < SECONDS_PER_FRAME; ++j) m_walking[i][j] = 0;
 }
-Entity::Entity(GLuint texture_id, float speed, float width, float height, EntityType EntityType, AIType AIType, AIState AIState) : m_position(0.0f), m_movement(0.0f), m_scale(1.0f, 1.0f, 0.0f), m_model_matrix(1.0f),
-m_speed(speed), m_animation_cols(0), m_animation_frames(0), m_animation_index(0),
-m_animation_rows(0), m_animation_indices(nullptr), m_animation_time(0.0f),
-m_texture_id(texture_id), m_velocity(0.0f), m_acceleration(0.0f), m_width(width), m_height(height), m_entity_type(EntityType), m_ai_type(AIType), m_ai_state(AIState)
+
+// Simpler constructor for partial initialization
+Entity::Entity(GLuint texture_id, float speed, float width, float height, EntityType entity_type)
+    : m_position(0.0f), m_movement(0.0f), m_scale(1.0f, 1.0f, 0.0f), m_model_matrix(1.0f),
+    m_speed(speed), m_animation_cols(0), m_animation_frames(0), m_animation_index(0),
+    m_animation_rows(0), m_animation_indices(nullptr), m_animation_time(0.0f),
+    m_texture_id(texture_id), m_velocity(0.0f), m_acceleration(0.0f), m_width(width), m_height(height),
+    m_entity_type(entity_type), m_ai_type(WALKER), m_ai_state(IDLE), m_is_jumping(false), m_jumping_power(0.0f)
+{
+    // Initialize m_walking with zeros or any default value
+    for (int i = 0; i < SECONDS_PER_FRAME; ++i)
+        for (int j = 0; j < SECONDS_PER_FRAME; ++j) m_walking[i][j] = 0;
+}
+
+Entity::Entity(GLuint texture_id, float speed, float width, float height, EntityType entity_type, AIType ai_type, AIState ai_state)
+    : m_position(0.0f), m_movement(0.0f), m_scale(1.0f, 1.0f, 0.0f), m_model_matrix(1.0f),
+    m_speed(speed), m_animation_cols(0), m_animation_frames(0), m_animation_index(0),
+    m_animation_rows(0), m_animation_indices(nullptr), m_animation_time(0.0f),
+    m_texture_id(texture_id), m_velocity(0.0f), m_acceleration(0.0f), m_width(width), m_height(height),
+    m_entity_type(entity_type), m_ai_type(ai_type), m_ai_state(ai_state), m_is_jumping(false), m_jumping_power(0.0f)
 {
     // Initialize m_walking with zeros or any default value
     for (int i = 0; i < SECONDS_PER_FRAME; ++i)
@@ -121,6 +126,35 @@ Entity::~Entity() {}
 
 void Entity::draw_sprite_from_texture_atlas(ShaderProgram* program, GLuint texture_id, int index)
 {
+    // If animation columns and rows are not set (or set to 0), treat as a single sprite
+    if (m_animation_cols <= 0 || m_animation_rows <= 0) {
+        float tex_coords[] = {
+            0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f,
+            0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f
+        };
+
+        float vertices[] = {
+            -0.5, -0.5, 0.5, -0.5, 0.5, 0.5,
+            -0.5, -0.5, 0.5, 0.5, -0.5, 0.5
+        };
+
+        // Render the single sprite
+        glBindTexture(GL_TEXTURE_2D, texture_id);
+
+        glVertexAttribPointer(program->get_position_attribute(), 2, GL_FLOAT, false, 0, vertices);
+        glEnableVertexAttribArray(program->get_position_attribute());
+
+        glVertexAttribPointer(program->get_tex_coordinate_attribute(), 2, GL_FLOAT, false, 0, tex_coords);
+        glEnableVertexAttribArray(program->get_tex_coordinate_attribute());
+
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+
+        glDisableVertexAttribArray(program->get_position_attribute());
+        glDisableVertexAttribArray(program->get_tex_coordinate_attribute());
+        return;
+    }
+
+    // Original code for sprite sheets with multiple frames
     // Step 1: Calculate the UV location of the indexed frame
     float u_coord = (float)(index % m_animation_cols) / (float)m_animation_cols;
     float v_coord = (float)(index / m_animation_cols) / (float)m_animation_rows;
@@ -305,6 +339,7 @@ void const Entity::check_collision_x(Map* map)
         m_collided_right = true;
     }
 }
+
 void Entity::update(float delta_time, Entity* player, Entity* collidable_entities, int collidable_entity_count, Map* map)
 {
     if (!m_is_active) return;
@@ -347,17 +382,27 @@ void Entity::update(float delta_time, Entity* player, Entity* collidable_entitie
 
     m_position.y += m_velocity.y * delta_time;
 
-    check_collision_y(collidable_entities, collidable_entity_count);
-    check_collision_y(map);
+    if (collidable_entities != NULL && collidable_entity_count > 0) {
+        check_collision_y(collidable_entities, collidable_entity_count);
+    }
+
+    if (map != NULL) {
+        check_collision_y(map);
+    }
 
     m_position.x += m_velocity.x * delta_time;
-    check_collision_x(collidable_entities, collidable_entity_count);
-    check_collision_x(map);
+
+    if (collidable_entities != NULL && collidable_entity_count > 0) {
+        check_collision_x(collidable_entities, collidable_entity_count);
+    }
+
+    if (map != NULL) {
+        check_collision_x(map);
+    }
 
     m_model_matrix = glm::mat4(1.0f);
     m_model_matrix = glm::translate(m_model_matrix, m_position);
 }
-
 
 void Entity::render(ShaderProgram* program)
 {

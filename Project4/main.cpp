@@ -31,6 +31,7 @@
 #include "Map.h"
 #include "Utility.h"
 #include "Scene.h"
+#include "MenuScene.h"
 #include "LevelA.h"
 #include "LevelB.h"
 #include "LevelC.h"
@@ -56,14 +57,15 @@ FONT_FILEPATH[] = "assets/font1.png";
 constexpr float MILLISECONDS_IN_SECOND = 1000.0;
 
 enum AppStatus { RUNNING, TERMINATED };
-enum GameScenes { LEVEL_A, LEVEL_B, LEVEL_C };
+enum GameScenes { MENU, LEVEL_A, LEVEL_B, LEVEL_C };
 
 // ----- GLOBAL VARIABLES ----- //
 Scene* g_current_scene;
+MenuScene* g_menu_scene;
 LevelA* g_level_a;
 LevelB* g_level_b;
 LevelC* g_level_c;
-GameScenes g_current_scene_id = LEVEL_A;
+GameScenes g_current_scene_id = MENU;
 
 SDL_Window* g_display_window;
 
@@ -148,10 +150,13 @@ void initialise()
     g_font_texture_id = Utility::load_texture(FONT_FILEPATH);
 
     // ----- LEVEL SETUP ----- //
+    g_menu_scene = new MenuScene();
     g_level_a = new LevelA();
     g_level_b = new LevelB();
     g_level_c = new LevelC();
-    switch_to_scene(g_level_a);
+
+    // Start with the menu scene
+    switch_to_scene(g_menu_scene);
 
     // ----- BLENDING ----- //
     glEnable(GL_BLEND);
@@ -160,25 +165,6 @@ void initialise()
 
 void process_input()
 {
-    // Don't process input if game is over
-    if (g_current_scene->is_game_over()) {
-        SDL_Event event;
-        while (SDL_PollEvent(&event))
-        {
-            if (event.type == SDL_QUIT || event.type == SDL_WINDOWEVENT_CLOSE) {
-                g_app_status = TERMINATED;
-            }
-            else if (event.type == SDL_KEYDOWN) {
-                if (event.key.keysym.sym == SDLK_q) {
-                    g_app_status = TERMINATED;
-                }
-            }
-        }
-        return;
-    }
-
-    g_current_scene->get_state().player->set_movement(glm::vec3(0.0f));
-
     SDL_Event event;
     while (SDL_PollEvent(&event))
     {
@@ -197,9 +183,17 @@ void process_input()
                 g_app_status = TERMINATED;
                 break;
 
+            case SDLK_RETURN:
+                // If we're in the menu scene, start the game
+                if (g_current_scene_id == MENU) {
+                    switch_to_scene(g_level_a);
+                    g_current_scene_id = LEVEL_A;
+                }
+                break;
+
             case SDLK_SPACE:
                 // ----- JUMPING ----- //
-                if (g_current_scene->get_state().player->get_collided_bottom())
+                if (g_current_scene_id != MENU && g_current_scene->get_state().player->get_collided_bottom())
                 {
                     g_current_scene->get_state().player->jump();
                     Mix_PlayChannel(-1, g_current_scene->get_state().jump_sfx, 0);
@@ -215,14 +209,24 @@ void process_input()
         }
     }
 
-    // ----- KEY HOLD ----- //
-    const Uint8* key_state = SDL_GetKeyboardState(NULL);
+    // Only process movement input if we're not in the menu
+    if (g_current_scene_id != MENU) {
+        // Don't process input if game is over
+        if (g_current_scene->is_game_over()) {
+            return;
+        }
 
-    if (key_state[SDL_SCANCODE_LEFT])        g_current_scene->get_state().player->move_left();
-    else if (key_state[SDL_SCANCODE_RIGHT])  g_current_scene->get_state().player->move_right();
+        g_current_scene->get_state().player->set_movement(glm::vec3(0.0f));
 
-    if (glm::length(g_current_scene->get_state().player->get_movement()) > 1.0f)
-        g_current_scene->get_state().player->normalise_movement();
+        // ----- KEY HOLD ----- //
+        const Uint8* key_state = SDL_GetKeyboardState(NULL);
+
+        if (key_state[SDL_SCANCODE_LEFT])        g_current_scene->get_state().player->move_left();
+        else if (key_state[SDL_SCANCODE_RIGHT])  g_current_scene->get_state().player->move_right();
+
+        if (glm::length(g_current_scene->get_state().player->get_movement()) > 1.0f)
+            g_current_scene->get_state().player->normalise_movement();
+    }
 }
 
 void update()
@@ -244,40 +248,43 @@ void update()
         // ----- UPDATING THE SCENE (i.e. map, character, enemies...) ----- //
         g_current_scene->update(FIXED_TIMESTEP);
 
-        // Update global game state from current scene
-        g_lives = g_current_scene->get_lives();
-        g_game_over = g_current_scene->is_game_over();
+        // Update global game state from current scene (only if not in menu)
+        if (g_current_scene_id != MENU) {
+            g_lives = g_current_scene->get_lives();
+            g_game_over = g_current_scene->is_game_over();
+        }
 
         delta_time -= FIXED_TIMESTEP;
     }
 
     g_accumulator = delta_time;
 
-
     // ----- PLAYER CAMERA ----- //
-    g_view_matrix = glm::mat4(1.0f);
+    if (g_current_scene_id != MENU) {
+        g_view_matrix = glm::mat4(1.0f);
 
-    if (g_current_scene->get_state().player->get_position().x > LEVEL1_LEFT_EDGE) {
-        g_view_matrix = glm::translate(g_view_matrix, glm::vec3(-g_current_scene->get_state().player->get_position().x, 3.75, 0));
-    }
-    else {
-        g_view_matrix = glm::translate(g_view_matrix, glm::vec3(-5, 3.75, 0));
-    }
+        if (g_current_scene->get_state().player->get_position().x > LEVEL1_LEFT_EDGE) {
+            g_view_matrix = glm::translate(g_view_matrix, glm::vec3(-g_current_scene->get_state().player->get_position().x, 3.75, 0));
+        }
+        else {
+            g_view_matrix = glm::translate(g_view_matrix, glm::vec3(-5, 3.75, 0));
+        }
 
-    // Check if we need to switch scenes
-    int next_scene_id = g_current_scene->get_state().next_scene_id;
-    if (next_scene_id != -1 && !g_game_over) {
-        switch (next_scene_id) {
-        case 1:  // Switch to LevelB
-            switch_to_scene(g_level_b);
-            g_current_scene_id = LEVEL_B;
-            break;
-        case 2:  // Switch to LevelC
-            switch_to_scene(g_level_c);
-            g_current_scene_id = LEVEL_C;
-            break;
-        default:
-            break;
+        // Check if we need to switch scenes
+        int next_scene_id = g_current_scene->get_state().next_scene_id;
+        if (next_scene_id != -1 && !g_game_over) {
+            switch (next_scene_id) {
+            case 1:  // Switch to LevelB
+                switch_to_scene(g_level_b);
+                g_current_scene_id = LEVEL_B;
+                break;
+            case 2:  // Switch to LevelC
+                switch_to_scene(g_level_c);
+                g_current_scene_id = LEVEL_C;
+                break;
+            default:
+                break;
+            }
         }
     }
 }
@@ -299,6 +306,7 @@ void shutdown()
     SDL_Quit();
 
     // ----- DELETING LEVEL DATA (i.e. map, character, enemies...) ----- //
+    delete g_menu_scene;
     delete g_level_a;
     delete g_level_b;
     delete g_level_c;

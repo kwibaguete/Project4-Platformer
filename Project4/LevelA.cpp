@@ -15,7 +15,7 @@
 #define LEVEL_HEIGHT 8
 #define LEVEL_END_X 12.0f  // Position where the level ends
 
-constexpr char SPRITESHEET_FILEPATH[] = "assets/george_0.png",
+constexpr char PLAYER_FILEPATH[] = "assets/pudding.png",
 PLATFORM_FILEPATH[] = "assets/platformPack_tile027.png",
 ENEMY_FILEPATH[] = "assets/usagi.png",
 FONT_FILEPATH[] = "assets/font1.png";
@@ -48,7 +48,7 @@ void LevelA::initialise()
     GLuint map_texture_id = Utility::load_texture("assets/tileset.png");
     m_game_state.map = new Map(LEVEL_WIDTH, LEVEL_HEIGHT, LEVEL_A_DATA, map_texture_id, 1.0f, 4, 1);
 
-    GLuint player_texture_id = Utility::load_texture(SPRITESHEET_FILEPATH);
+    GLuint player_texture_id = Utility::load_texture(PLAYER_FILEPATH);
 
     int player_walking_animation[4][4] =
     {
@@ -60,19 +60,19 @@ void LevelA::initialise()
 
     glm::vec3 acceleration = glm::vec3(0.0f, -4.81f, 0.0f);
 
+    // For a single sprite (pudding.png), set animation parameters to 0
     m_game_state.player = new Entity(
         player_texture_id,         // texture id
         5.0f,                      // speed
         acceleration,              // acceleration
         5.0f,                      // jumping power
-        player_walking_animation,  // animation index sets
         0.0f,                      // animation time
-        4,                         // animation frame amount
+        0,                         // animation frame amount (set to 0 for single sprite)
         0,                         // current animation index
-        4,                         // animation column amount
-        4,                         // animation row amount
+        0,                         // animation column amount (set to 0 for single sprite)
+        0,                         // animation row amount (set to 0 for single sprite)
         1.0f,                      // width
-        1.0f,                       // height
+        1.0f,                      // height
         PLAYER
     );
 
@@ -106,7 +106,7 @@ void LevelA::initialise()
     Mix_PlayMusic(m_game_state.bgm, -1);
     Mix_VolumeMusic(60.0f);
 
-    m_game_state.jump_sfx = Mix_LoadWAV("assets/bounce.wav");
+    m_game_state.jump_sfx = Mix_LoadWAV("assets/sploosh.wav");
     m_game_state.hurt_sfx = Mix_LoadWAV("assets/damage.wav");
 
     // Set next scene ID to -1 (no transition yet)
