@@ -20,7 +20,6 @@ PLATFORM_FILEPATH[] = "assets/platformPack_tile027.png",
 ENEMY_FILEPATH[] = "assets/usagi.png",
 FONT_FILEPATH[] = "assets/font1.png";
 
-// Rename to LEVEL_A_DATA to avoid conflict with LevelB
 unsigned int LEVEL_A_DATA[] =
 {
     3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -149,8 +148,8 @@ void LevelA::update(float delta_time)
 
     // Check if player has reached the end of the level
     if (m_game_state.player->get_position().x >= LEVEL_END_X && !m_game_state.game_over) {
-        // Set a flag to indicate level completion
-        m_game_state.next_scene_id = 1;  // 1 will represent LevelB
+        // flag to indicate level completion
+        m_game_state.next_scene_id = 1;  // 1 is LevelB
     }
 }
 

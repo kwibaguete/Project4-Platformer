@@ -19,7 +19,6 @@ PLATFORM_FILEPATH[] = "assets/platformPack_tile027.png",
 ENEMY_FILEPATH[] = "assets/usagi.png",
 FONT_FILEPATH[] = "assets/font1.png";
 
-// Using a unique name for the level data to avoid linker errors
 unsigned int LEVEL_C_DATA[] =
 {
     3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -127,6 +126,12 @@ void LevelC::update(float delta_time)
     }
 
     m_game_state.player->update(delta_time, m_game_state.player, m_game_state.enemies, ENEMY_COUNT, m_game_state.map);
+
+    // Check if player has reached the rightmost column (win condition)
+    if (m_game_state.player->get_position().x >= 13.0f) {
+        // Set next scene to 3 (win scene)
+        m_game_state.next_scene_id = 3;
+    }
 
     for (int i = 0; i < ENEMY_COUNT; i++)
     {

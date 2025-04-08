@@ -154,7 +154,6 @@ void Entity::draw_sprite_from_texture_atlas(ShaderProgram* program, GLuint textu
         return;
     }
 
-    // Original code for sprite sheets with multiple frames
     // Step 1: Calculate the UV location of the indexed frame
     float u_coord = (float)(index % m_animation_cols) / (float)m_animation_cols;
     float v_coord = (float)(index / m_animation_cols) / (float)m_animation_rows;

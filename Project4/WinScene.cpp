@@ -7,17 +7,16 @@
 * NYU School of Engineering Policies and Procedures on
 * Academic Misconduct.
 **/
-
-#include "MenuScene.h"
+#include "WinScene.h"
 #include "Utility.h"
 
-MenuScene::MenuScene() {
+WinScene::WinScene() {
     // Initialize member variables
-    game_title = "RISE OF THE AI";
-    start_prompt = "PRESS ENTER TO START";
+    win_message = "YOU WIN!";
+    restart_prompt = "PRESS ENTER TO PLAY AGAIN";
 }
 
-void MenuScene::initialise() {
+void WinScene::initialise() {
     // Load the font texture
     font_texture_id = Utility::load_texture("assets/font1.png");
 
@@ -25,18 +24,18 @@ void MenuScene::initialise() {
     m_game_state.next_scene_id = -1;
 }
 
-void MenuScene::update(float delta_time) {
-    // Nothing to update in the menu scene
+void WinScene::update(float delta_time) {
+    // Nothing to update in the win scene
 }
 
-void MenuScene::render(ShaderProgram* program) {
+void WinScene::render(ShaderProgram* program) {
     // Set the viewport for the menu (centered)
     glm::mat4 view_matrix = glm::mat4(1.0f);
     program->set_view_matrix(view_matrix);
 
-    // Render the game title (larger text, positioned at the top center)
-    Utility::draw_text(program, font_texture_id, game_title, 0.4f, 0.2f, glm::vec3(-4.0f, 2.0f, 0.0f));
+    // Render the win message (larger text, positioned at the top center)
+    Utility::draw_text(program, font_texture_id, win_message, 0.4f, 0.2f, glm::vec3(-4.0f, 2.0f, 0.0f));
 
-    // Render the start prompt (positioned below the title)
-    Utility::draw_text(program, font_texture_id, start_prompt, 0.25f, 0.15f, glm::vec3(-4.0f, 0.0f, 0.0f));
+    // Render the restart prompt (positioned below the message)
+    Utility::draw_text(program, font_texture_id, restart_prompt, 0.25f, 0.05f, glm::vec3(-4.0f, 0.0f, 0.0f));
 }

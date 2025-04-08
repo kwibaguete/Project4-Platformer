@@ -33,6 +33,7 @@
 #include "Scene.h"
 #include "MenuScene.h"
 #include "LoseScene.h"
+#include "WinScene.h"
 #include "LevelA.h"
 #include "LevelB.h"
 #include "LevelC.h"
@@ -58,12 +59,13 @@ FONT_FILEPATH[] = "assets/font1.png";
 constexpr float MILLISECONDS_IN_SECOND = 1000.0;
 
 enum AppStatus { RUNNING, TERMINATED };
-enum GameScenes { MENU, LEVEL_A, LEVEL_B, LEVEL_C, LOSE_SCREEN };
+enum GameScenes { MENU, LEVEL_A, LEVEL_B, LEVEL_C, LOSE_SCREEN, WIN_SCREEN };
 
 // ----- GLOBAL VARIABLES ----- //
 Scene* g_current_scene;
 MenuScene* g_menu_scene;
 LoseScene* g_lose_scene;
+WinScene* g_win_scene;
 LevelA* g_level_a;
 LevelB* g_level_b;
 LevelC* g_level_c;
@@ -154,6 +156,7 @@ void initialise()
     // ----- LEVEL SETUP ----- //
     g_menu_scene = new MenuScene();
     g_lose_scene = new LoseScene();
+    g_win_scene = new WinScene();
     g_level_a = new LevelA();
     g_level_b = new LevelB();
     g_level_c = new LevelC();
@@ -193,7 +196,7 @@ void process_input()
                     g_current_scene_id = LEVEL_A;
                 }
                 // If we're in the lose screen, restart the game
-                else if (g_current_scene_id == LOSE_SCREEN) {
+                else if (g_current_scene_id == LOSE_SCREEN || g_current_scene_id == WIN_SCREEN) {
                     // Reset lives and game over state
                     g_lives = 3;
                     g_game_over = false;
@@ -207,7 +210,7 @@ void process_input()
             case SDLK_SPACE:
                 // ----- JUMPING ----- //
                 if (g_current_scene_id != MENU && g_current_scene_id != LOSE_SCREEN &&
-                    g_current_scene->get_state().player->get_collided_bottom())
+                    g_current_scene_id != WIN_SCREEN && g_current_scene->get_state().player->get_collided_bottom())
                 {
                     g_current_scene->get_state().player->jump();
                     Mix_PlayChannel(-1, g_current_scene->get_state().jump_sfx, 0);
@@ -224,7 +227,7 @@ void process_input()
     }
 
     // Only process movement input if we're in a gameplay level
-    if (g_current_scene_id != MENU && g_current_scene_id != LOSE_SCREEN) {
+    if (g_current_scene_id != MENU && g_current_scene_id != LOSE_SCREEN && g_current_scene_id != WIN_SCREEN) {
         // Don't process input if game is over
         if (g_current_scene->is_game_over()) {
             return;
@@ -263,7 +266,7 @@ void update()
         g_current_scene->update(FIXED_TIMESTEP);
 
         // Update global game state from current scene (only if in a gameplay level)
-        if (g_current_scene_id != MENU && g_current_scene_id != LOSE_SCREEN) {
+        if (g_current_scene_id != MENU && g_current_scene_id != LOSE_SCREEN && g_current_scene_id != WIN_SCREEN) {
             g_lives = g_current_scene->get_lives();
             g_game_over = g_current_scene->is_game_over();
 
@@ -271,6 +274,12 @@ void update()
             if (g_game_over) {
                 switch_to_scene(g_lose_scene);
                 g_current_scene_id = LOSE_SCREEN;
+            }
+
+            // Check if we need to switch to win screen (special case for level C)
+            if (g_current_scene_id == LEVEL_C && g_current_scene->get_state().next_scene_id == 3) {
+                switch_to_scene(g_win_scene);
+                g_current_scene_id = WIN_SCREEN;
             }
         }
 
@@ -280,7 +289,7 @@ void update()
     g_accumulator = delta_time;
 
     // ----- PLAYER CAMERA ----- //
-    if (g_current_scene_id != MENU && g_current_scene_id != LOSE_SCREEN) {
+    if (g_current_scene_id != MENU && g_current_scene_id != LOSE_SCREEN && g_current_scene_id != WIN_SCREEN) {
         g_view_matrix = glm::mat4(1.0f);
 
         if (g_current_scene->get_state().player->get_position().x > LEVEL1_LEFT_EDGE) {
@@ -328,6 +337,7 @@ void shutdown()
     // ----- DELETING LEVEL DATA (i.e. map, character, enemies...) ----- //
     delete g_menu_scene;
     delete g_lose_scene;
+    delete g_win_scene;
     delete g_level_a;
     delete g_level_b;
     delete g_level_c;
